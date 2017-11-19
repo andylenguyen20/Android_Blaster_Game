@@ -24,12 +24,12 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
 
     volatile boolean playing;
 
-    boolean paused = true;
+    boolean paused = false;
 
     Canvas canvas;
     Paint paint;
 
-    long fps;
+    long fps = 50;
 
     private long timeThisFrame;
 
@@ -38,9 +38,11 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
     int screenY;
 
     Character character;
-    int charRadius = 20;
+    int charRadius = 50;
 
     int bulletRadius = 10;
+
+    int velocityBuffer = 50;
 
     ArrayList<FlyingObject> bullets;
 
@@ -61,6 +63,7 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
         character = new Character(screenX, screenY, charRadius);
         bullets = new ArrayList<>();
         //initialization
+
         for(int i = 0; i < 10; i++){
             bullets.add(new Bullet(screenX, screenY, bulletRadius));
         }
@@ -85,6 +88,7 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
     @Override
     public void run() {
         while(playing){
+
             long startFrameTime = System.currentTimeMillis();
 
             //update the fram
@@ -101,6 +105,7 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
     }
 
     public void update(){
+        System.out.println("updating");
         character.update(fps);
 
         for(FlyingObject fo: bullets){
@@ -123,7 +128,7 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
             paint.setColor(Color.argb(255,255,255,255));
 
             //draw the character
-
+            canvas.drawCircle(character.getX(), character.getY(), charRadius, paint);
             //draw the flying objects
 
             //Draw everthing to the screen
@@ -147,15 +152,28 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
     }
 
     public boolean onTouchEvent(MotionEvent motionEvent){
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         switch(motionEvent.getAction() & MotionEvent.ACTION_MASK){
             //Player has touched the screen
             case MotionEvent.ACTION_DOWN:
                 //action
+                character.setPoint(motionEvent.getX(), motionEvent.getY());
+                System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
                 break;
-
+            case MotionEvent.ACTION_MOVE:
+                character.setPoint(motionEvent.getX(), motionEvent.getY());
+                System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
+                break;
             //Player has removed finger from screen
             case MotionEvent.ACTION_UP:
                 //action
+                character.setPoint(motionEvent.getX(), motionEvent.getY());
+                System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
                 break;
         }
         return true;
