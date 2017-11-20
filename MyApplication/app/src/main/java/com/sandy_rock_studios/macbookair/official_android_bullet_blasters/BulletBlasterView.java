@@ -13,6 +13,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Created by macbookair on 11/19/17.
@@ -59,6 +60,8 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
         display.getSize(size);
         screenX = size.x;
         screenY = size.y;
+        System.out.println(screenX);
+        System.out.println(screenY);
 
         character = new Character(screenX, screenY, charRadius);
         bullets = new ArrayList<>();
@@ -105,12 +108,16 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
     }
 
     public void update(){
-        System.out.println("updating");
         character.update(fps);
 
+        Iterator<FlyingObject> iter = bullets.iterator();
         for(FlyingObject fo: bullets){
             fo.update(fps);
-
+            if(fo.intersectsWithCharacter(character) && fo.isVisible()){
+                fo.setVisibility(false);
+                lives--;
+                System.out.println("character has died");
+            }
         }
     }
 
@@ -130,9 +137,23 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
             //draw the character
             canvas.drawCircle(character.getX(), character.getY(), charRadius, paint);
             //draw the flying objects
-
+            for(FlyingObject fo: bullets){
+                if(fo.isVisible()){
+                    canvas.drawCircle(fo.getMyX(), fo.getMyY(), fo.getRadius(), paint);
+                }
+            }
+            if(lives <= 0){
+                paint.setTextSize(90);
+                canvas.drawText("YOU HAVE LOST!", 100, screenY / 2, paint);
+            }
+            paint.setTextSize(40);
+            score++;
+            canvas.drawText("Score: " + score + "   Lives: " + lives, 100, 100, paint);
             //Draw everthing to the screen
             ourHolder.unlockCanvasAndPost(canvas);
+
+
+
         }
     }
 
@@ -163,17 +184,17 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
             case MotionEvent.ACTION_DOWN:
                 //action
                 character.setPoint(motionEvent.getX(), motionEvent.getY());
-                System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
+                //System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
                 break;
             case MotionEvent.ACTION_MOVE:
                 character.setPoint(motionEvent.getX(), motionEvent.getY());
-                System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
+                //System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
                 break;
             //Player has removed finger from screen
             case MotionEvent.ACTION_UP:
                 //action
                 character.setPoint(motionEvent.getX(), motionEvent.getY());
-                System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
+                //System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
                 break;
         }
         return true;
