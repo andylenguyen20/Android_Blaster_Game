@@ -16,7 +16,7 @@ public class Character {
 
     public Character(int screenX, int screenY, int rad){
         radius = rad;
-        reset(screenX,screenY);
+        //reset(screenX,screenY); do not need - redundant
     }
 
     public void setPoint(float x, float y){

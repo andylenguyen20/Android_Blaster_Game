@@ -2,18 +2,24 @@ package com.sandy_rock_studios.macbookair.official_android_bullet_blasters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+
+import static com.sandy_rock_studios.macbookair.official_android_bullet_blasters.R.id.textView;
 
 /**
  * Created by macbookair on 11/19/17.
@@ -39,7 +45,7 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
     int screenY;
 
     Character character;
-    int charRadius = 50;
+    int charRadius = 20;
 
     int bulletRadius = 10;
 
@@ -47,7 +53,7 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
 
     ArrayList<FlyingObject> bullets;
 
-    int score = 0;
+    static int score = 0;
     int lives = 3;
 
     public BulletBlasterView(Context context){
@@ -65,17 +71,23 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
 
         character = new Character(screenX, screenY, charRadius);
         bullets = new ArrayList<>();
-        //initialization
 
-        for(int i = 0; i < 10; i++){
-            bullets.add(new Bullet(screenX, screenY, bulletRadius));
-        }
+        new CountDownTimer(3000, 1000){
+            public void onTick(long millisUntilFinished){
 
-        restart();
+            }
+            public void onFinish(){
+                restart();
+            }
+        }.start();
     }
 
     public void restart(){
-        //other stuff here
+        //initialization of bullets
+        for(int i = 0; i < 40; i++){
+            bullets.add(new Bullet(screenX, screenY, bulletRadius));
+        }
+
         for(FlyingObject bullet: bullets){
             bullet.reset(screenX,screenY);
         }
@@ -90,8 +102,8 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
 
     @Override
     public void run() {
-        while(playing){
 
+        while(playing){
             long startFrameTime = System.currentTimeMillis();
 
             //update the fram
@@ -99,7 +111,6 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
                 update();
             }
             draw();
-
             timeThisFrame = System.currentTimeMillis() - startFrameTime;
             if(timeThisFrame >=1){
                 fps = 1000/timeThisFrame;
@@ -143,8 +154,14 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
                 }
             }
             if(lives <= 0){
-                paint.setTextSize(90);
-                canvas.drawText("YOU HAVE LOST!", 100, screenY / 2, paint);
+
+                endGame();
+                /*
+                paint.setTextSize(50);
+                String lost = "YOU HAVE LOST!";
+                int xPos = (screenX/2) - (int)(paint.measureText("YOU HAVE LOST")/2);
+                int yPos = (int)((screenY/2) - ((paint.descent() + paint.ascent())/2));
+                canvas.drawText(lost, xPos, yPos, paint);*/
             }
             paint.setTextSize(40);
             score++;
@@ -199,4 +216,11 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
         }
         return true;
     }
+
+    public void endGame(){
+        Context myContext = getContext();
+        Intent intent = new Intent(myContext, EndPageActivity.class);
+        myContext.startActivity(intent);
+    }
+
 }

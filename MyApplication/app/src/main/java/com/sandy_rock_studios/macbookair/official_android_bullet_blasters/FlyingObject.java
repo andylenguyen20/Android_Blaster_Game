@@ -16,7 +16,7 @@ public abstract class FlyingObject {
 
     public FlyingObject(int screenX, int screenY, float r){
         radius = r;
-        reset(screenX, screenY);
+        //reset(screenX, screenY); do not need to call reset here - redundant
     }
     public void update(long fps){
         myX = myX + xVelocity/fps;
@@ -38,9 +38,12 @@ public abstract class FlyingObject {
     }
     public void assignRandomPosition(int screenX, int screenY){
         Random random = new Random();
-        myX = random.nextFloat() * screenX;
+        //myX = random.nextFloat() * screenX;
+        myX = screenX; //for testing purposes
+        myY = screenY; //for testing purposes
         random.nextFloat();
-        myY = random.nextInt(2) * screenY; //starts bullet at either bottom or top of screen
+        //myY = random.nextFloat() * screenY;
+        //myY = random.nextInt(2) * screenY; //starts bullet at either bottom or top of screen
     }
     public float getMyX(){
         return myX;
@@ -66,8 +69,8 @@ public abstract class FlyingObject {
     }
     public void reset(int screenX, int screenY){
         assignRandomPosition(screenX,screenY);
-        //assignRandomVelocity();
-        assignVelocity(screenY);
+        assignRandomVelocity();
+        //assignVelocity(screenY);
     }
     public boolean isVisible(){
         return isVisible;
