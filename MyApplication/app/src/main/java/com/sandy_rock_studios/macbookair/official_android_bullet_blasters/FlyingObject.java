@@ -1,81 +1,61 @@
 package com.sandy_rock_studios.macbookair.official_android_bullet_blasters;
 
-import android.graphics.PointF;
-
 import java.util.Random;
 
 /**
  * Created by macbookair on 11/19/17.
  */
 
-public abstract class FlyingObject {
-    private float myX, myY, radius;
-    private float xVelocity, yVelocity;
-    private int velocityBuffer = 100;
-    private boolean isVisible = true;
+public abstract class FlyingObject extends ScreenObject {
+    public static final int VELOCITY_BUFFER = 60;
+    public static final int MIN_SPEED = 1;
+    public static final int MAX_SPEED = 5;
+    public static final int DEFAULT_FO_RADIUS = 10;
 
-    public FlyingObject(int screenX, int screenY, float r){
-        radius = r;
-        //reset(screenX, screenY); do not need to call reset here - redundant
+    private float velocity;
+    private boolean isActive;
+
+    public FlyingObject(){
+        super(DEFAULT_FO_RADIUS);
+        isActive = false;
     }
     public void update(long fps){
-        myX = myX + xVelocity/fps;
-        myY = myY + yVelocity/fps;
+        setPoint(position.x, position.y + position.y * velocity/fps);
     }
-    public void assignVelocity(int screenY){
-        if(myY == screenY){
-            xVelocity = 0;
-            yVelocity = -velocityBuffer;
+
+    public abstract void reactToCollision(BulletBlasterView bulletBlasterView);
+    public boolean isOffscreen(int screenY){
+        return position.y < 200;
+    }
+
+    public void spawn(int screenX, int screenY){
+        setPositionAndVelocity(screenX,screenY);
+        isActive = true;
+    }
+    public boolean getStatus(){
+        return isActive;
+    }
+    public void setInactive(){
+        isActive = false;
+    }
+
+    //HELPER METHOD
+    /*
+    public void setPositionAndVelocity(int screenX, int screenY){
+        Random random = new Random();
+        if(random.nextInt(2) == 1){
+            setPoint(random.nextFloat() * screenX, screenY);
+            velocity = -(random.nextFloat() * (MAX_SPEED - MIN_SPEED) + MIN_SPEED)/VELOCITY_BUFFER;
         }else{
-            xVelocity = 0;
-            yVelocity = velocityBuffer;
+            setPoint(random.nextFloat() * screenX, 200);
+            velocity = (random.nextFloat() * (MAX_SPEED - MIN_SPEED) + MIN_SPEED)/VELOCITY_BUFFER;
         }
-    }
-    public void assignRandomVelocity(){
+        System.out.println("x: " + position.x + " y: " + position.y + " vel: " + velocity);
+    }*/
+
+    public void setPositionAndVelocity(int screenX, int screenY){
         Random random = new Random();
-        xVelocity = random.nextFloat() * velocityBuffer - velocityBuffer;
-        yVelocity = random.nextFloat() * velocityBuffer - velocityBuffer;
-    }
-    public void assignRandomPosition(int screenX, int screenY){
-        Random random = new Random();
-        //myX = random.nextFloat() * screenX;
-        myX = screenX; //for testing purposes
-        myY = screenY; //for testing purposes
-        random.nextFloat();
-        //myY = random.nextFloat() * screenY;
-        //myY = random.nextInt(2) * screenY; //starts bullet at either bottom or top of screen
-    }
-    public float getMyX(){
-        return myX;
-    }
-    public float getMyY(){
-        return myY;
-    }
-    public float getxVelocity(){
-        return xVelocity;
-    }
-    public float getyVelocity(){
-        return yVelocity;
-    }
-    public float getRadius(){
-        return radius;
-    }
-    public boolean intersectsWithCharacter(Character character){
-        //this is a formula taken from https://stackoverflow.com/questions/8367512/algorithm-to-detect-if-a-circles-intersect-with-any-other-circle-in-the-same-pla
-        double squaredCenterDistance = Math.pow(character.getX() - myX, 2) + Math.pow(character.getY() - myY, 2);
-        double squaredRadiusSum = Math.pow(character.getRadius() + radius,2);
-        double squaredRadiusDiff = Math.pow(character.getRadius() - radius,2);
-        return squaredCenterDistance >= squaredRadiusDiff && squaredCenterDistance <= squaredRadiusSum;
-    }
-    public void reset(int screenX, int screenY){
-        assignRandomPosition(screenX,screenY);
-        assignRandomVelocity();
-        //assignVelocity(screenY);
-    }
-    public boolean isVisible(){
-        return isVisible;
-    }
-    public void setVisibility(boolean visibility){
-        isVisible = visibility;
+        setPoint(random.nextFloat() * screenX, screenY);
+        velocity = -(random.nextFloat() * (MAX_SPEED - MIN_SPEED) + MIN_SPEED)/VELOCITY_BUFFER;
     }
 }

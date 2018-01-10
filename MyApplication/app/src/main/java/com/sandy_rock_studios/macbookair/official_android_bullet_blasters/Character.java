@@ -1,56 +1,33 @@
 package com.sandy_rock_studios.macbookair.official_android_bullet_blasters;
 
+import android.graphics.Color;
 import android.graphics.PointF;
 
 /**
  * Created by macbookair on 11/19/17.
  */
 
-public class Character {
-    private float myX;
-    private float myY;
-    private float radius;
+public class Character extends ScreenObject {
+    public static final int DEFAULT_CHARACTER_RADIUS = 50;
+    public static final int DEFAULT_CHARACTER_COLOR = Color.argb(255,255,255,255);
 
-    private float xVelocity;
-    private float yVelocity;
-
-    public Character(int screenX, int screenY, int rad){
-        radius = rad;
-        //reset(screenX,screenY); do not need - redundant
+    public Character(){
+        super(DEFAULT_CHARACTER_RADIUS);
     }
 
-    public void setPoint(float x, float y){
-        myX = x;
-        myY = y;
+    public boolean reset(int screenX, int screenY){
+        setPoint(screenX/2,screenY/2);
+        radius = DEFAULT_CHARACTER_RADIUS;
+        return true;
     }
-    public void setxVelocity(float velocity){
-        xVelocity = velocity;
+    public boolean inCollision(FlyingObject flyingObject){
+        //this is a formula taken from https://stackoverflow.com/questions/8367512/algorithm-to-detect-if-a-circles-intersect-with-any-other-circle-in-the-same-pla
+        double squaredCenterDistance = Math.pow(position.x - flyingObject.position.x, 2) + Math.pow(position.y - flyingObject.position.y, 2);
+        double squaredRadiusSum = Math.pow(radius + flyingObject.radius,2);
+        double squaredRadiusDiff = Math.pow(radius - flyingObject.radius,2);
+        return squaredCenterDistance >= squaredRadiusDiff && squaredCenterDistance <= squaredRadiusSum;
     }
-    public void setyVelocity(float velocity){
-        yVelocity = velocity;
-    }
-    public float getyVelocity(){
-        return yVelocity;
-    }
-    public float getX(){
-        return myX;
-    }
-    public float getY(){
-        return myY;
-    }
-
-    public float getRadius(){
-        return radius;
-    }
-
-    public void update(long fps){
-        myX = myX + xVelocity/fps;
-        myY = myY + yVelocity/fps;
-    }
-    public void reset(int screenX, int screenY){
-        myX = screenX/2;
-        myY = screenY/2;
-        xVelocity = 0;
-        yVelocity = 0;
+    public int getColor(){
+        return DEFAULT_CHARACTER_COLOR;
     }
 }

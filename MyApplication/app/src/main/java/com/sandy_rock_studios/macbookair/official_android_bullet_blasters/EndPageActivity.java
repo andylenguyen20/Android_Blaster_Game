@@ -5,11 +5,9 @@ import android.os.Bundle;
 import android.widget.TextView;
 
 public class EndPageActivity extends AppCompatActivity {
-    //TextView finalScore = (TextView)findViewById(R.id.textView);
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //finalScore.setText("FINAL SCORE: " + BulletBlasterView.getScore());
         setContentView(R.layout.activity_end_page);
     }
 }

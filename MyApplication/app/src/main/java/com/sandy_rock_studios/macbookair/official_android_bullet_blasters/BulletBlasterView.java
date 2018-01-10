@@ -13,13 +13,10 @@ import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-
-import static com.sandy_rock_studios.macbookair.official_android_bullet_blasters.R.id.textView;
+import java.util.Random;
 
 /**
  * Created by macbookair on 11/19/17.
@@ -28,16 +25,13 @@ import static com.sandy_rock_studios.macbookair.official_android_bullet_blasters
 public class BulletBlasterView extends SurfaceView implements Runnable{
     Thread gameThread = null;
     SurfaceHolder ourHolder;
-
-    volatile boolean playing;
-
-    boolean paused = false;
-
     Canvas canvas;
     Paint paint;
 
-    long fps = 50;
+    volatile boolean playing;
+    boolean paused = false;
 
+    long fps = 50;
     private long timeThisFrame;
 
     //size of screen in pixels
@@ -45,15 +39,12 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
     int screenY;
 
     Character character;
-    int charRadius = 20;
+    FlyingObject[] flyingObjects;
+    int nextBullet = 0;
+    public static final int maxBullets = 50;
+    public static final int BACKGROUND_COLOR = Color.BLACK;
 
-    int bulletRadius = 10;
-
-    int velocityBuffer = 50;
-
-    ArrayList<FlyingObject> bullets;
-
-    static int score = 0;
+    int score = 0;
     int lives = 3;
 
     public BulletBlasterView(Context context){
@@ -66,129 +57,83 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
         display.getSize(size);
         screenX = size.x;
         screenY = size.y;
-        System.out.println(screenX);
-        System.out.println(screenY);
 
-        character = new Character(screenX, screenY, charRadius);
-        bullets = new ArrayList<>();
+        character = new Character();
+        flyingObjects = new FlyingObject[40];
 
+        restart();
+        /*
         new CountDownTimer(3000, 1000){
             public void onTick(long millisUntilFinished){
 
             }
+
             public void onFinish(){
                 restart();
             }
         }.start();
+        */
     }
 
-    public void restart(){
-        //initialization of bullets
-        for(int i = 0; i < 40; i++){
-            bullets.add(new Bullet(screenX, screenY, bulletRadius));
-        }
-
-        for(FlyingObject bullet: bullets){
-            bullet.reset(screenX,screenY);
-        }
-
-        character.reset(screenX,screenY);
-        if(lives == 0){
-            score = 0;
-            lives = 3;
-        }
-    }
-
-
+    //CONTINUOUSLY CALLED
     @Override
     public void run() {
-
         while(playing){
             long startFrameTime = System.currentTimeMillis();
-
-            //update the fram
             if(!paused){
                 update();
             }
             draw();
+
             timeThisFrame = System.currentTimeMillis() - startFrameTime;
             if(timeThisFrame >=1){
                 fps = 1000/timeThisFrame;
             }
         }
     }
-
     public void update(){
-        character.update(fps);
+        //TODO: launch bullets in a timed fashion
+        for(FlyingObject fo: flyingObjects){
 
-        Iterator<FlyingObject> iter = bullets.iterator();
-        for(FlyingObject fo: bullets){
+            if(fo.isOffscreen(screenY)){
+                fo.setInactive();
+                fo.spawn(screenX,screenY);
+            }
+
+            //may need to move this to another method, as update gets called with no time delay
+            //and we intend to launch bullets with time delay
             fo.update(fps);
-            if(fo.intersectsWithCharacter(character) && fo.isVisible()){
-                fo.setVisibility(false);
-                lives--;
-                System.out.println("character has died");
+            if(character.inCollision(fo) && fo.getStatus()){
+                fo.setInactive();
+                fo.reactToCollision(this);
+                fo.spawn(screenX,screenY);
+                System.out.println("collision detected");
             }
         }
     }
-
-    //draw the newly updated scene
     public void draw(){
-
         //make sure our drawing surface is valid or we crash
         if(ourHolder.getSurface().isValid()){
-            //Lock the canvas ready to draw
             canvas = ourHolder.lockCanvas();
-
-            //background color
-            canvas.drawColor(Color.argb(255, 26, 128, 182));
-
-            paint.setColor(Color.argb(255,255,255,255));
-
-            //draw the character
-            canvas.drawCircle(character.getX(), character.getY(), charRadius, paint);
+            canvas.drawColor(BACKGROUND_COLOR);
+            paint.setColor(character.getColor());
+            canvas.drawCircle(character.position.x, character.position.y, character.radius, paint);
             //draw the flying objects
-            for(FlyingObject fo: bullets){
-                if(fo.isVisible()){
-                    canvas.drawCircle(fo.getMyX(), fo.getMyY(), fo.getRadius(), paint);
+            for(FlyingObject fo: flyingObjects){
+                paint.setColor(fo.getColor());
+                if(fo.getStatus()){
+                    canvas.drawCircle(fo.position.x, fo.position.y, fo.radius, paint);
                 }
             }
             if(lives <= 0){
-
                 endGame();
-                /*
-                paint.setTextSize(50);
-                String lost = "YOU HAVE LOST!";
-                int xPos = (screenX/2) - (int)(paint.measureText("YOU HAVE LOST")/2);
-                int yPos = (int)((screenY/2) - ((paint.descent() + paint.ascent())/2));
-                canvas.drawText(lost, xPos, yPos, paint);*/
             }
             paint.setTextSize(40);
             score++;
             canvas.drawText("Score: " + score + "   Lives: " + lives, 100, 100, paint);
-            //Draw everthing to the screen
             ourHolder.unlockCanvasAndPost(canvas);
-
-
-
         }
     }
-
-    public void pause(){
-        playing = false;
-        try{
-            gameThread.join();
-        }catch(InterruptedException e){
-            Log.e("error:", "joining thread");
-        }
-    }
-
-    public void resume(){
-        playing = true;
-        gameThread = new Thread(this);
-        gameThread.start();
-    }
-
     public boolean onTouchEvent(MotionEvent motionEvent){
         try {
             Thread.sleep(50);
@@ -197,9 +142,7 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
         }
 
         switch(motionEvent.getAction() & MotionEvent.ACTION_MASK){
-            //Player has touched the screen
             case MotionEvent.ACTION_DOWN:
-                //action
                 character.setPoint(motionEvent.getX(), motionEvent.getY());
                 //System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
                 break;
@@ -207,9 +150,7 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
                 character.setPoint(motionEvent.getX(), motionEvent.getY());
                 //System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
                 break;
-            //Player has removed finger from screen
             case MotionEvent.ACTION_UP:
-                //action
                 character.setPoint(motionEvent.getX(), motionEvent.getY());
                 //System.out.println("point: (" + character.getX() + "," + character.getY() + ")");
                 break;
@@ -217,10 +158,51 @@ public class BulletBlasterView extends SurfaceView implements Runnable{
         return true;
     }
 
+    //GAME STAGING
+    public void pause(){
+        playing = false;
+        try{
+            gameThread.join();
+        }catch(InterruptedException e){
+            Log.e("error:", "joining thread");
+        }
+    }
+    public void resume(){
+        playing = true;
+        gameThread = new Thread(this);
+        gameThread.start();
+    }
     public void endGame(){
         Context myContext = getContext();
         Intent intent = new Intent(myContext, EndPageActivity.class);
         myContext.startActivity(intent);
     }
+    public void restart(){
+        System.out.println("GAME RESTARTED");
+        for(int i = 0; i < flyingObjects.length; i++){
+            flyingObjects[i] = generateRandomFlyingObject();
+            flyingObjects[i].spawn(screenX,screenY);
+        }
+        character.reset(screenX,screenY);
+        score = 0;
+        lives = 3;
+    }
 
+    //HELPERS
+    public FlyingObject generateRandomFlyingObject(){
+
+        Random random = new Random();
+        int randomInt = random.nextInt(100);
+        if(randomInt < 10){
+            return randomPowerUp();
+        }else{
+            return new Bullet();
+        }
+    }
+    public FlyingObject randomPowerUp() {
+        FlyingObject[] options = new FlyingObject[]
+                {new MiniBullet(), new MegaBullet(),
+                        new ClearBullet()};
+        return options[(int)(Math.random() * options.length)];
+    }
 }
